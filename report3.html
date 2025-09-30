@@ -125,54 +125,46 @@ function submitReport(){
 // ✅ Show list of all saved reports
 function listReports(){
   const allReports = JSON.parse(localStorage.getItem('dailyReports')||'{}');
-  if(Object.keys(allReports).length===0){ alert("No reports saved!"); return; }
-  
-  const win = window.open("","_blank");
-  
-  let html = "<h2 style='text-align:center;'>Saved Reports</h2><ul>";
-  
-  for(const date in allReports){
-    html += `<li><a href="#" onclick="const data=JSON.parse(localStorage.getItem('dailyReports'))['${date}']; 
-      let h='<h1>Daily Production and Dispatch Report</h1>'; 
-      const [y,m,d]='${date}'.split('-'); h+='<h3 style=\\'text-align:center;\\'>Date: '+d+'/'+m+'/'+y+'</h3>';
-      const renderTable=(title,rows)=>{ let t='<h2>'+title+'</h2><table border=1 style=\\'width:100%;border-collapse:collapse;\\'>';
-      t+='<tr><th>SO</th><th>Description</th><th>Spring A</th><th>Spring B</th><th>Coir A</th><th>Coir B</th><th>Total</th></tr>';
-      rows.forEach(r=> t+='<tr>'+r.map(c=>'\\<td>'+c+'</td>').join('')+'</tr>'); return t+'</table>'; };
-      h+=renderTable('Accumulated Status',data.accumulatedStatus);
-      h+=renderTable('Machine Output Status',data.machineOutputStatus);
-      h+=renderTable('Shipment Status',data.shipmentStatus);
-      h+='<br><div style=\\'text-align:center;\\'><button onclick=\\'window.print()\\'>Print</button></div>';
-      document.body.innerHTML=h; return false;">${date}</a></li>`;
+  if(Object.keys(allReports).length===0){ 
+    alert("No reports saved!"); 
+    return; 
   }
 
+  let html = "<h2>Saved Reports</h2><ul>";
+  for(const date in allReports){
+    // Open the report in a new window directly
+    html += `<li><a href="#" onclick="openReport('${date}')">${date}</a></li>`;
+  }
   html += "</ul>";
-  win.document.write(html);
-  win.document.close();
-}
-// ✅ Open a report in a new window with Print button
-function openReport(date){
-  const allReports = JSON.parse(localStorage.getItem('dailyReports')||'{}');
-  const data = allReports[date];
-  if(!data){ alert("No report for "+date); return; }
-
-  let html = "<h1>Daily Production and Dispatch Report</h1>";
-  const [y,m,d] = date.split("-");
-  html += `<h3 style="text-align:center;">Date: ${d}/${m}/${y}</h3>`;
   
-  const renderTable=(title,rows)=>{
-    let t = `<h2>${title}</h2><table border="1" style="width:100%;border-collapse:collapse;">`;
-    t += "<tr><th>SO</th><th>Description</th><th>Spring A</th><th>Spring B</th><th>Coir A</th><th>Coir B</th><th>Total</th></tr>";
-    rows.forEach(r=> t+="<tr>"+r.map(c=>`<td>${c}</td>`).join("")+"</tr>");
-    return t+"</table>";
-  };
-  html+=renderTable("Accumulated Status",data.accumulatedStatus);
-  html+=renderTable("Machine Output Status",data.machineOutputStatus);
-  html+=renderTable("Shipment Status",data.shipmentStatus);
-
-  html += `<br><div style="text-align:center;"><button onclick="window.print()">Print</button></div>`;
-
   const win = window.open("","_blank");
-  win.document.write(html);
+  win.document.write(`<script>
+      const reports = ${JSON.stringify(allReports)};
+      function openReport(date){
+          const data = reports[date];
+          if(!data){ alert("No report for "+date); return; }
+          
+          let html = "<h1>Daily Production and Dispatch Report</h1>";
+          const [y,m,d] = date.split("-");
+          html += \`<h3 style='text-align:center;'>Date: \${d}/\${m}/\${y}</h3>\`;
+
+          const renderTable=(title,rows)=>{
+            let t = "<h2>"+title+"</h2><table border='1' style='width:100%;border-collapse:collapse;'>";
+            t += "<tr><th>SO</th><th>Description</th><th>Spring A</th><th>Spring B</th><th>Coir A</th><th>Coir B</th><th>Total</th></tr>";
+            rows.forEach(r=> t+="<tr>"+r.map(c=>\`<td>\${c}</td>\`).join("")+"</tr>");
+            return t+"</table>";
+          };
+
+          html += renderTable("Accumulated Status", data.accumulatedStatus);
+          html += renderTable("Machine Output Status", data.machineOutputStatus);
+          html += renderTable("Shipment Status", data.shipmentStatus);
+          html += "<br><div style='text-align:center;'><button onclick='window.print()'>Print</button></div>";
+
+          const reportWin = window.open("","_blank");
+          reportWin.document.write(html);
+          reportWin.document.close();
+      }
+  <\/script>`);
   win.document.close();
 }
 
