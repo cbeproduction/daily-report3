@@ -123,49 +123,52 @@ function submitReport(){
 }
 
 // ✅ Show list of all saved reports
-function listReports(){
-  const allReports = JSON.parse(localStorage.getItem('dailyReports')||'{}');
-  if(Object.keys(allReports).length===0){ 
-    alert("No reports saved!"); 
-    return; 
-  }
+function listReports() {
+    const allReports = JSON.parse(localStorage.getItem('dailyReports') || '{}');
+    if (Object.keys(allReports).length === 0) {
+        alert("No reports saved!");
+        return;
+    }
 
-  let html = "<h2>Saved Reports</h2><ul>";
-  for(const date in allReports){
-    // Open the report in a new window directly
-    html += `<li><a href="#" onclick="openReport('${date}')">${date}</a></li>`;
-  }
-  html += "</ul>";
-  
-  const win = window.open("","_blank");
-  win.document.write(`<script>
-      const reports = ${JSON.stringify(allReports)};
-      function openReport(date){
-          const data = reports[date];
-          if(!data){ alert("No report for "+date); return; }
-          
-          let html = "<h1>Daily Production and Dispatch Report</h1>";
-          const [y,m,d] = date.split("-");
-          html += \`<h3 style='text-align:center;'>Date: \${d}/\${m}/\${y}</h3>\`;
+    // Open a new window to list reports
+    const listWin = window.open("", "_blank");
+    let html = "<h2>Saved Reports</h2><ul>";
 
-          const renderTable=(title,rows)=>{
-            let t = "<h2>"+title+"</h2><table border='1' style='width:100%;border-collapse:collapse;'>";
-            t += "<tr><th>SO</th><th>Description</th><th>Spring A</th><th>Spring B</th><th>Coir A</th><th>Coir B</th><th>Total</th></tr>";
-            rows.forEach(r=> t+="<tr>"+r.map(c=>\`<td>\${c}</td>\`).join("")+"</tr>");
-            return t+"</table>";
-          };
+    for (const date in allReports) {
+        html += `<li><a href="#" onclick="window.openReport('${date}')">${date}</a></li>`;
+    }
 
-          html += renderTable("Accumulated Status", data.accumulatedStatus);
-          html += renderTable("Machine Output Status", data.machineOutputStatus);
-          html += renderTable("Shipment Status", data.shipmentStatus);
-          html += "<br><div style='text-align:center;'><button onclick='window.print()'>Print</button></div>";
+    html += "</ul>";
+    html += `<script>
+        const reports = ${JSON.stringify(allReports)};
+        function openReport(date){
+            const data = reports[date];
+            if(!data){ alert("No report for "+date); return; }
 
-          const reportWin = window.open("","_blank");
-          reportWin.document.write(html);
-          reportWin.document.close();
-      }
-  <\/script>`);
-  win.document.close();
+            let html = "<h1>Daily Production and Dispatch Report</h1>";
+            const [y,m,d] = date.split("-");
+            html += \`<h3 style='text-align:center;'>Date: \${d}/\${m}/\${y}</h3>\`;
+
+            const renderTable = (title, rows) => {
+                let t = "<h2>"+title+"</h2><table border='1' style='width:100%;border-collapse:collapse;'>";
+                t += "<tr><th>SO</th><th>Description</th><th>Spring A</th><th>Spring B</th><th>Coir A</th><th>Coir B</th><th>Total</th></tr>";
+                rows.forEach(r => t += "<tr>" + r.map(c => "<td>" + c + "</td>").join("") + "</tr>");
+                return t + "</table>";
+            };
+
+            html += renderTable("Accumulated Status", data.accumulatedStatus);
+            html += renderTable("Machine Output Status", data.machineOutputStatus);
+            html += renderTable("Shipment Status", data.shipmentStatus);
+            html += "<br><div style='text-align:center;'><button onclick='window.print()'>Print</button></div>";
+
+            const reportWin = window.open("", "_blank");
+            reportWin.document.write(html);
+            reportWin.document.close();
+        }
+    <\/script>`;
+    
+    listWin.document.write(html);
+    listWin.document.close();
 }
 
 function downloadCSV(){
